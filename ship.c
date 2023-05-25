@@ -29,9 +29,9 @@
 #define m1_4_AVERAGE (double)(m1_4_ALL_POSSIBLE_SCORE)/(double)(m1_4_ALL_POSSIBLE_TYPE)
 #define mALL_AVERAGE (double)(TOTAL_DICE)*3.5
 
-#define mALL_PARAMETER (double)(1.2)
-#define m2_3_PARAMETER (double)(1)
-#define m1_4_PARAMETER (double)(1)
+#define mALL_PARAMETER (double)(1.3)
+#define m2_3_PARAMETER (double)(1.1)
+#define m1_4_PARAMETER (double)(1.1)
 
 #define SUM(n) (1+n)*n/2
 #define SUMSUM(n) (n)*(n+1)*(n+2)/6
@@ -62,8 +62,7 @@
 	}
 #endif
 
-//                                 Yah  1_4        abcde 2_3 abcd         all
-int miss_order[13] = { -1 , 1 , 2 , 12 , 9 , 3 , 4 , 11 , 8 , 10 , 5 , 6 , 7 };// parameter can change
+int miss_order[13] = { -1 , 1 , 12 , 2 , 9 , 3 , 11 , 4 , 10 , 8 , 5 , 6 , 7 };// parameter can change
 int miss_index = 1;
 int test_order[13] = { -1 , 1 , 2 , 3 , 7 , 4 , 5 , 6 , 10 , 8 , 9 , 11 , 12 };
 
@@ -346,14 +345,14 @@ void get_strategy( int dice[TOTAL_DICE] , bool strategy[TOTAL_DICE] , Sheet scor
 	for(int x=0;x<=TOTAL_DICE;x++){
 		int choose = C_m_n( TOTAL_DICE , x );
 		for(int y=0;y<choose;y++){
-			printf("%lf " , expected_score[x][y] );
+			// printf("%lf " , expected_score[x][y] );
 			if( max_expected_value < expected_score[x][y] ){
 				max_expected_value = expected_score[x][y];
 				num_dice_rethrow = x;
 				index_rethrow = y;
 			}
 		}
-		printf("\n");
+		// printf("\n");
 	}
 	assert( num_dice_rethrow != -1 );
 	assert( index_rethrow != -1 );
@@ -371,7 +370,7 @@ int main(){
     srand( time(0) );
 	#ifdef MONTE
 	double try_sum = 0;
-	int try_times = 5000;
+	int try_times = 100;
 	for(int try=0;try<try_times;try++){
 	#endif 
 
@@ -461,10 +460,8 @@ int main(){
 		// ************************************************** calculate the optimal
 		score_want_get( dice , score_sheet , result );
 		#ifndef MONTE
-			color(15);
 			printf("index: %d is the program wants to select.\n" , result[1] );
 			printf("And it should get %d score.\n" , result[0] );
-			color(7);
 		#endif
 		// ************************************************** fourth input index
 		#ifdef USER_INPUT
