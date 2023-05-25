@@ -58,7 +58,7 @@
 	#define NOTICE(string){                  \
 		color(11);                           \
 		printf("[ Notice ] %s\n" , string ); \
-		color(15);                           \
+		color(7);                            \
 	}
 #endif
 
@@ -395,7 +395,10 @@ int main(){
 		// ************************************************** first input
         #ifdef USER_INPUT
 			NOTICE("Please enter the value you throw.");
-			scanf("%d %d %d %d %d" , &dice[0] , &dice[1] , &dice[2] , &dice[3] , &dice[4] );
+			for(int y=0;y<5;y++){
+				scanf("%d" , &dice[y] );
+			}
+			// scanf("%d %d %d %d %d" , &dice[0] , &dice[1] , &dice[2] , &dice[3] , &dice[4] );
         #elif PROGRAM_INPUT
 			for(int y=0;y<TOTAL_DICE;y++){
 				dice[y] = rand()%6+1;
