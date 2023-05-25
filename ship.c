@@ -6,6 +6,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef WINDOWS
+	#include <windows.h>
+#endif
+
 #define TOTAL_DICE 5
 #define HALF_DICE TOTAL_DICE/2+1
 
@@ -34,11 +38,29 @@
 #define SUMSUMSUM(n) (n)*(n+1)*(n+2)*(n+3)/24
 #define BREAK_TIME 1
 
-#define ERR(){                                                                  \
-	printf("\e[41m[ Waring ] error happen in %s function\e[0m \n" , __func__ ); \
-	exit(0);                                                                    \
-}
-#define NOTICE(string) printf("\e[1;46m[ NOTICE ] %s\e[0m \n" , string );
+#ifdef LINUX
+	#define ERR(){                                                                  \
+		printf("\e[41m[ Waring ] error happen in %s function\e[0m \n" , __func__ ); \
+		exit(0);                                                                    \
+	}
+	#define NOTICE(string) printf("\e[1;46m[ Notice ] %s\e[0m \n" , string );
+#elif WINDOWS
+	void color( int x ){
+		if( x>=0 && x<=255 ) SetConsoleTextAttribute( GetStdHandle(STD_OUTPUT_HANDLE),x);
+		else                 SetConsoleTextAttribute( GetStdHandle(STD_OUTPUT_HANDLE),7);
+	}
+	#define ERR(){                                                      \
+		color(12);                                                      \
+		printf("[ Waring ] error happen in %s function\n" , __func__ ); \
+		color(7);                                                       \
+		exit(0);                                                        \
+	}
+	#define NOTICE(string){                  \
+		color(11);                           \
+		printf("[ Notice ] %s\n" , string ); \
+		color(15);                           \
+	}
+#endif
 
 //                                 Yah  1_4        abcde 2_3 abcd         all
 int miss_order[13] = { -1 , 1 , 2 , 12 , 9 , 3 , 4 , 11 , 8 , 10 , 5 , 6 , 7 };// parameter can change
@@ -132,17 +154,30 @@ void show_dice( int mode , int dice[TOTAL_DICE] , bool strategy[TOTAL_DICE] ){
 	}
 	memset( output[0] , 'b' , length );
 	memset( output[4] , 'b' , length );
-	if( mode == 1 ) NOTICE("Yellow means re throw again.");
+	if( mode == 1 ) NOTICE("Yellow means rethrow again.");
 	for(int x=0;x<5;x++){
 		for(int y=0;y<length;y++){
-			if( strategy[y/7] ){
-				if( output[x][y] == 'b' ) printf("\e[33;43m%c\e[0m" , output[x][y] );
-				else                      printf("\e[33m%c\e[0m" , output[x][y] );
-			}
-			else{
-				if( output[x][y] == 'b' ) printf("\e[37;47m%c\e[0m" , output[x][y] );
-				else                      printf("%c" , output[x][y] );
-			}
+			#ifdef LINUX
+				if( strategy[y/7] ){ // rethrow dice
+					if( output[x][y] == 'b' ) printf("\e[33;43m%c\e[0m" , output[x][y] );
+					else                      printf("\e[33m%c\e[0m"    , output[x][y] );
+				}
+				else{                // don't rethrow dice
+					if( output[x][y] == 'b' ) printf("\e[37;47m%c\e[0m" , output[x][y] );
+					else                      printf("%c"               , output[x][y] );
+				}
+			#elif WINDOWS
+				if( strategy[y/7] ){ // rethrow dice
+					if( output[x][y] == 'b' ) color(102);
+					else                      color(14);
+				}
+				else{                // don't rethrow dice
+					if( output[x][y] == 'b' ) color(255);
+					else                      color(15);
+				}
+				printf("%c" , output[x][y] );
+				color(7);
+			#endif
 		}
 		printf(" \n");
 	}
@@ -150,7 +185,7 @@ void show_dice( int mode , int dice[TOTAL_DICE] , bool strategy[TOTAL_DICE] ){
 void show_score_sheet( Sheet score_sheet ){
 	char info[256] = {};
 	char line[256] = {};
-	printf("\e[1;46m[ Notice ] Your score sheet is ...\e[0m \n");
+	printf("Your score sheet is ...\n");
 	sprintf( info , "    Type   | index | Score ");
 	//                    12        7
 	memset( line , '-' , strlen(info) );
@@ -347,7 +382,13 @@ int main(){
 
     for(int x=0;x<12;x++){
 		#ifndef MONTE
-			printf("\e[1;46m[ NOTICE ] %d round\e[0m \n" , x+1 );
+			#ifdef LINUX
+				printf("\e[1;46m[ Notice ] %d round\e[0m \n" , x+1 );
+			#elif WINDOWS
+				color(11);
+				printf("[ Notice ] %d round\n" , x+1 );
+				color(7);
+			#endif
 		#endif
 		bool strategy[TOTAL_DICE] = {};
 		int result[2] = {};
@@ -363,14 +404,17 @@ int main(){
 		// ************************************************** first show
 		#ifndef MONTE
 			show_dice( 0 , dice , strategy );
-			sleep(BREAK_TIME);
 		#endif
 		// ************************************************** first strategy
 		get_strategy( dice , strategy , score_sheet );
 		#ifndef MONTE
 			show_dice( 1 , dice , strategy );
 			NOTICE("2 chance remain to throw.");
-			sleep(BREAK_TIME);
+			#ifdef LINUX
+				sleep(BREAK_TIME);
+			#elif WINDOWS
+				Sleep(BREAK_TIME*1000);
+			#endif
 		#endif
 		// ************************************************** second input
 		#ifdef USER_INPUT
@@ -385,14 +429,17 @@ int main(){
 		memset( strategy , 0 , TOTAL_DICE*sizeof(bool) );
 		#ifndef MONTE
 			show_dice( 0 , dice , strategy );
-			sleep(BREAK_TIME);
 		#endif
 		// ************************************************** second strategy
 		get_strategy( dice , strategy , score_sheet );
 		#ifndef MONTE
 			show_dice( 1 , dice , strategy );
 			NOTICE("1 chance remain to throw.");
-			sleep(BREAK_TIME);
+			#ifdef LINUX
+				sleep(BREAK_TIME);
+			#elif WINDOWS
+				Sleep(BREAK_TIME*1000);
+			#endif
 		#endif
 		// ************************************************** third input
 		#ifdef USER_INPUT
@@ -407,13 +454,14 @@ int main(){
 		memset( strategy , 0 , TOTAL_DICE*sizeof(bool) );
 		#ifndef MONTE
 			show_dice( 0 , dice , strategy );
-			sleep(BREAK_TIME);
 		#endif
 		// ************************************************** calculate the optimal
 		score_want_get( dice , score_sheet , result );
 		#ifndef MONTE
-			printf("\e[1;46mindex: %d is the program wants to select.\e[0m \n" , result[1] );
-			printf("\e[1;46mAnd it should get %d score.\e[0m \n" , result[0] );
+			color(15);
+			printf("index: %d is the program wants to select.\n" , result[1] );
+			printf("And it should get %d score.\n" , result[0] );
+			color(7);
 		#endif
 		// ************************************************** fourth input index
 		#ifdef USER_INPUT
@@ -428,12 +476,16 @@ int main(){
 		// **************************************************
 		#ifndef MONTE
 			show_score_sheet( score_sheet );
-			sleep(3);
+			#ifdef LINUX
+				sleep(3);
+			#elif WINDOWS
+				Sleep(BREAK_TIME*1000);
+			#endif
 		#endif
     }
 	if( score_sheet.score[0] >= 63 ) score_sheet.score[0] += 35;                   // Bonus
 	for(int x=7;x<=12;x++)           score_sheet.score[0] += score_sheet.score[x]; // Sum the total score to [0]
-	printf("\e[1;46m Your total score is %d \e[0m \n" , score_sheet.score[0] );
+	printf("Your total score is %d\n" , score_sheet.score[0] );
 	#ifndef MONTE
 	show_score_sheet( score_sheet );
 	#endif
